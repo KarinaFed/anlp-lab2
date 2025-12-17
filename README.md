@@ -220,7 +220,7 @@ pip install -r requirements.txt
 ```bash
 # Create .env file or set environment variables
 LITELLM_BASE_URL=http://a6k2.dgx:34000/v1
-LITELLM_API_KEY=sk-jZkA340PLjFS8B47HeFHsw
+LITELLM_API_KEY=your_api_key
 MODEL_NAME=qwen3-32b
 ```
 
@@ -269,26 +269,6 @@ print(result["final_response"].answer)
 ```
 
 The notebook also contains 5 complete experiments with detailed analysis.
-
-## Project Structure
-
-```
-.
-├── src/
-│   ├── __init__.py
-│   ├── config.py          # Configuration (API endpoints, model name)
-│   ├── models.py          # Pydantic models for structured outputs
-│   ├── agents.py          # Agent implementations
-│   ├── graph.py           # LangGraph workflow
-│   ├── memory.py          # Memory management
-│   └── tools.py           # Tools (calculator, code executor, etc.)
-├── notebooks/
-│   └── experiments.ipynb  # Experiments and evaluation
-├── main.py                # Main entry point
-├── requirements.txt       # Dependencies
-├── README.md             # This file
-└── memory_store.json     # Memory storage (created at runtime)
-```
 
 ## Technical Details
 
@@ -418,4 +398,5 @@ This pattern is chosen because:
 ## License
 
 This project is part of an academic assignment.
+
 
