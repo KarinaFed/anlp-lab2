@@ -8,15 +8,20 @@
 
 This project implements a multi-agent system using LangChain and LangGraph to help with study, coding, and productivity tasks. The system uses a **Router + Specialists** pattern where a router agent analyzes queries and dispatches them to specialized agents, with memory management across interactions.
 
+The system helps with realistic tasks including:
+- **Study assistance:** Explaining theoretical concepts, creating study plans;
+- **Coding help:** Providing code examples, debugging assistance, best practices;
+- **Productivity planning:** Creating structured study schedules and task breakdowns.
+
 ## Architecture
 
 ### Design Pattern: Router + Specialists with Memory
 
 The system implements a **Router + Specialists** pattern, which is a common MAS pattern where:
-- A **Router Agent** acts as the entry point, analyzing queries and deciding which specialized agents should handle them
-- **Specialist Agents** handle specific types of tasks (theory explanation, coding help, planning)
-- A **Memory Manager** maintains context across interactions
-- A **Synthesizer** combines outputs from multiple agents into a final response
+- A **Router Agent** acts as the entry point, analyzing queries and deciding which specialized agents should handle them;
+- **Specialist Agents** handle specific types of tasks (theory explanation, coding help, planning);
+- A **Memory Manager** maintains context across interactions;
+- A **Synthesizer** combines outputs from multiple agents into a final response.
 
 ### Agents
 
@@ -71,7 +76,7 @@ The system implements a **Router + Specialists** pattern, which is a common MAS 
 
 ### Tools
 
-The system includes 4 tools:
+The system includes 4 tools that agents can use:
 
 1. **Calculator Tool** - evaluates mathematical expressions;
 2. **Code Executor Tool** - executes simple Python code snippets safely;
@@ -88,13 +93,30 @@ Memory is managed through a `MemoryStore` class that:
 
 ### State Management
 
-The system uses a `MultiAgentState` TypedDict that contains:
-- User query;
-- Routing decision;
-- Agent outputs (theory explanation, code help, study plan, memory update);
-- Memory context;
-- Final response;
-- Control flow information (agents involved, tools used, errors).
+The system uses a `MultiAgentState` TypedDict (defined in `src/graph.py`) that contains all required fields:
+
+**User Input:**
+- `user_query: str` - The user's question/query
+
+**Intermediate Fields:**
+- `routing_decision: Optional[RoutingDecision]` - Classification and routing decision;
+- `theory_explanation: Optional[TheoryExplanation]` - Partial response from theory agent;
+- `code_help: Optional[CodeHelp]` - Partial response from code agent;
+- `study_plan: Optional[StudyPlan]` - Partial response from planner agent;
+- `memory_update: Optional[MemoryUpdate]` - Memory retrieval/update information.
+
+**Final Answer:**
+- `final_response: Optional[FinalResponse]` - Final synthesized response
+
+**Memory-Related Fields:**
+- `memory_context: Optional[str]` - Retrieved context from previous interactions;
+- Session history is maintained in `MemoryStore` class and persisted to `memory_store.json`;
+- User profile (topics, languages, goals) stored in memory.
+
+**Control Flow:**
+- `agents_involved: List[str]` - Tracks which agents participated;
+- `tools_used: List[str]` - Tracks which tools were called;
+- `error: Optional[str]` - Error messages if any.
 
 ## Flow Diagram
 
@@ -128,7 +150,7 @@ graph TD
 1. **Entry Point:** User query enters through the Router Agent
 2. **Router Decision:** Router analyzes query and decides:
    - Query type (theory, code, planning, memory, general);
-   - Which agent to involve;
+   - Which specialist agents to involve;
    - Whether memory retrieval is needed;
    - Whether tools might be needed.
 3. **Memory Retrieval (if needed):** If `needs_memory=True`, Memory Manager retrieves relevant context from previous interactions.
@@ -177,12 +199,12 @@ graph TD
    - Each interaction contains: timestamp, user query, response (first 500 chars), agents involved.
 
 2. **User Profile:**
-   - Topics asked about;
+   - Topics asked about (for personalization);
    - Coding languages mentioned;
    - Study goals set.
 
 3. **Context Dictionary:**
-   - General context for extensibility
+   - General context for extensibility.
 
 **Where it is stored:**
 
@@ -192,24 +214,26 @@ graph TD
 
 **How memory influences later steps:**
 
-1. **Router Stage:**
-   - Router can request memory retrieval if query suggests context is needed (e.g., "What did we discuss earlier?");
-   - Recent context helps router make better routing decisions.
+1. **State Fields for Memory:**
+   - `memory_context: Optional[str]` in `MultiAgentState` accumulates retrieved context;
+   - `memory_update: Optional[MemoryUpdate]` stores memory action information;
+   - State fields accumulate previous questions/answers within the session.
 
-2. **Memory Manager Stage:**
-   - Retrieves recent interactions (last 3 by default);
-   - Searches history for keywords from current query;
-   - Provides retrieved context to specialist agents.
+2. **History Store:**
+   - `MemoryStore` class maintains a tiny "history store" in memory during execution;
+   - Persisted to simple JSON file (`memory_store.json`) for cross-session persistence;
+   - Stores last 20 interactions with timestamps, queries, responses, and agents involved.
 
-3. **Specialist Agent Stage:**
-   - Agents receive memory context as additional input;
-   - Can reference previous discussions to provide more relevant responses;
-   - Can build upon earlier explanations.
+3. **RAG-style Retrieval:**
+   - `search_history()` method implements keyword-based search over stored notes/interactions;
+   - Searches for relevant previous discussions based on query keywords;
+   - Retrieves context that influences later steps.
 
-4. **Synthesizer Stage:**
-   - Stores new interaction in memory;
-   - Updates user profile based on interaction content;
-   - Memory persisted to file for future sessions.
+4. **Memory Influence on Steps:**
+   - **Router Stage:** Router can request memory retrieval if query suggests context is needed;
+   - **Memory Manager Stage:** Retrieves recent interactions and searches history, provides context to state;
+   - **Specialist Agent Stage:** Agents receive `memory_context` from state as additional input;
+   - **Synthesizer Stage:** Stores new interaction in memory and updates user profile.
 
 ## Installation
 
@@ -218,14 +242,14 @@ graph TD
 pip install -r requirements.txt
 ```
 
-2. Set up environment variables:
+2. Set up environment variables (optional - defaults are from Lab 1):
 ```bash
 # Create .env file or set environment variables
+# These are the same variables used in Lab 1:
 LITELLM_BASE_URL=http://a6k2.dgx:34000/v1
-LITELLM_API_KEY=your_api_key
+LITELLM_API_KEY=sk-jZkA340PLjFS8B47HeFHsw
 MODEL_NAME=qwen3-32b
 ```
-
 ## Usage
 
 ### Command Line
@@ -277,9 +301,15 @@ The notebook also contains 5 complete experiments with detailed analysis.
 ### Model Configuration
 
 - **Model:** Qwen3-32B via vLLM;
-- **Endpoint:** OpenAI-compatible API;
+- **Endpoint:** OpenAI-compatible API endpoint;
+- **Configuration:** Uses the same variables from Lab 1:
+  - `LITELLM_BASE_URL` (default: `http://a6k2.dgx:34000/v1`);
+  - `LITELLM_API_KEY` (default: `your_api_key`);
+  - `MODEL_NAME` (default: `qwen3-32b`).
+- **Access Pattern:** All agents use `ChatOpenAI` from `langchain-openai` with `base_url` pointing to vLLM endpoint;
 - **Retry Logic:** Implemented for Pydantic parsing (max 3 retries);
-- **Temperature:** Varies by agent (router: 0.1, theory: 0.7, code: 0.3, planner: 0.5).
+- **Temperature:** Varies by agent (router: 0.1, theory: 0.7, code: 0.3, planner: 0.5);
+- **Libraries:** `langchain-openai`, `langgraph`, `langchain-core` (as required).
 
 ### Pydantic Models
 
@@ -293,12 +323,30 @@ All agents use Pydantic models for structured outputs:
 
 Retry logic is implemented in the LLM initialization (`max_retries=3`) to handle parsing errors.
 
-### Handoff Logic
+### Implementation Details
 
+**LangGraph Graph Structure:**
+- The system is implemented as a LangGraph `StateGraph` using `MultiAgentState` TypedDict;
+- Each agent corresponds to a node in the graph;
+- Nodes are connected via conditional edges based on routing decisions.
+
+**Node Implementation:**
+Each node (agent) follows this pattern:
+1. **Reads** relevant parts of the shared state (`MultiAgentState`);
+2. **Calls Qwen LLM** via LangChain using `ChatOpenAI` with vLLM endpoint:
+   - Uses `base_url` from config;
+   - Uses `api_key` from config;
+   - Uses `model_name` from config (qwen3-32b);
+   - Each agent has different prompts and temperature settings.
+3. **Optionally calls tools** (e.g., Knowledge Base, Code Executor, Schedule Tool);
+4. **Updates state** with its results (Pydantic model outputs).
+
+**Handoff Logic:**
 Handoff between agents is implemented through:
-1. **Conditional routing** in LangGraph based on routing decisions;
-2. **State passing** through the shared `MultiAgentState`;
-3. **Memory context** passed to specialist agents when needed.
+1. **Conditional routing** in LangGraph based on routing decisions (`route_after_router`, `route_after_memory` functions);
+2. **State passing** through the shared `MultiAgentState` TypedDict;
+3. **Memory context** passed to specialist agents when needed;
+4. **Path through graph** depends on query type and intermediate state (routing decision determines which specialist to use).
 
 ### Tool Calling
 
@@ -310,12 +358,17 @@ Tools are called by agents as needed:
 
 ## Experiments
 
-See `notebooks/experiments.ipynb` for:
-- 5 test queries covering different scenarios;
+In `notebooks/experiments.ipynb` you can see:
+- 5 test queries covering different scenarios:
+  - One conceptual/theoretical question about MAS;
+  - One design/architecture question;
+  - One implementation/coding question;
+  - Two queries related to everyday tasks (study planning, memory retrieval).
 - Analysis of agent routing and handoff;
 - Tool usage tracking;
 - Memory effectiveness evaluation;
-- Performance observations.
+- Performance observations;
+- Evaluation section with informal criteria.
 
 ## Design Scheme
 
@@ -364,6 +417,8 @@ This pattern is chosen because:
 
 5. **Modular Design:** Each agent operated independently with clear responsibilities, making the system easy to understand and extend.
 
+6. **Handoff Logic:** Conditional routing in LangGraph worked effectively, allowing the system to dynamically choose the appropriate agent based on query analysis.
+
 ### Challenges and Limitations
 
 1. **Routing Nuance:** In some cases, design/architecture questions were classified as theory. While the response was good, a more specific "design" query type could improve routing precision.
@@ -391,11 +446,12 @@ This pattern is chosen because:
 6. **Reviewer Agent:** Add an agent that reviews and improves responses before final output, ensuring consistency and quality across all interactions.
 
 7. **Better Tools:** Integrate more sophisticated tools:
-   - Web search for up-to-date information;
-   - Code analysis tools beyond simple execution;
-   - Documentation lookup for LangGraph/LangChain APIs.
+   - Web search for up-to-date information
+   - Code analysis tools beyond simple execution
+   - Documentation lookup for LangGraph/LangChain APIs
 
 8. **Planner-Executor Pattern:** Implement a more sophisticated planner-executor pattern for complex multi-step tasks that require decomposition and sequential execution.
+
 
 
 
