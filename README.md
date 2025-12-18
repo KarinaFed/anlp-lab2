@@ -1,10 +1,12 @@
-# Lab 2: Multi-Agent Study & Productivity Assistant
+# Laboratory work 2: Designing and Implementing a Multi-Agent System with LangChain & LangGraph
+
+**Scenario:** Multi-Agent Study & Productivity Assistant
 
 **Student:** Fedotova Karina, group J4233
 
 ## Overview
 
-This project implements a multi-agent system (MAS) using LangChain and LangGraph to help with study, coding, and productivity tasks. The system uses a **Router + Specialists** pattern where a router agent analyzes queries and dispatches them to specialized agents, with memory management across interactions.
+This project implements a multi-agent system using LangChain and LangGraph to help with study, coding, and productivity tasks. The system uses a **Router + Specialists** pattern where a router agent analyzes queries and dispatches them to specialized agents, with memory management across interactions.
 
 ## Architecture
 
@@ -19,80 +21,80 @@ The system implements a **Router + Specialists** pattern, which is a common MAS 
 ### Agents
 
 1. **Router Agent** (`router`)
-   - **Role:** Query classifier and dispatcher
+   - **Role:** Query classifier and dispatcher;
    - **Responsibilities:**
-     - Analyzes user queries
-     - Classifies query type (theory, code, planning, general, memory)
-     - Decides which specialist agents to involve
-     - Determines if memory retrieval or tool calling is needed
-   - **Output:** `RoutingDecision` (Pydantic model)
+     - Analyzes user queries;
+     - Classifies query type (theory, code, planning, general, memory);
+     - Decides which specialist agents to involve;
+     - Determines if memory retrieval or tool calling is needed;
+   - **Output:** `RoutingDecision` (Pydantic model).
 
 2. **Theory Explainer Agent** (`theory_explainer`)
-   - **Role:** Educational assistant for theoretical concepts
+   - **Role:** Educational assistant for theoretical concepts;
    - **Responsibilities:**
-     - Explains concepts clearly and comprehensively
-     - Provides key points, examples, and related concepts
-     - Uses knowledge base tool for common concepts
-   - **Output:** `TheoryExplanation` (Pydantic model)
+     - Explains concepts clearly and comprehensively;
+     - Provides key points, examples, and related concepts;
+     - Uses knowledge base tool for common concepts;
+   - **Output:** `TheoryExplanation` (Pydantic model).
 
 3. **Code Helper Agent** (`code_helper`)
-   - **Role:** Programming assistant
+   - **Role:** Programming assistant;
    - **Responsibilities:**
-     - Helps with coding questions and debugging
-     - Provides code examples and best practices
-     - Uses code executor tool for simple code snippets
-   - **Output:** `CodeHelp` (Pydantic model)
+     - Helps with coding questions and debugging;
+     - Provides code examples and best practices;
+     - Uses code executor tool for simple code snippets;
+   - **Output:** `CodeHelp` (Pydantic model).
 
 4. **Planner Agent** (`planner`)
-   - **Role:** Study planning and scheduling assistant
+   - **Role:** Study planning and scheduling assistant;
    - **Responsibilities:**
-     - Creates structured study plans
-     - Breaks down goals into steps with time estimates
-     - Uses schedule tool for time management
-   - **Output:** `StudyPlan` (Pydantic model)
+     - Creates structured study plans;
+     - Breaks down goals into steps with time estimates;
+     - Uses schedule tool for time management;
+   - **Output:** `StudyPlan` (Pydantic model).
 
 5. **Memory Manager Agent** (`memory_manager`)
-   - **Role:** Context and history manager
+   - **Role:** Context and history manager;
    - **Responsibilities:**
-     - Retrieves relevant context from previous interactions
-     - Stores user preferences and profile information
-     - Maintains session history
-   - **Output:** `MemoryUpdate` (Pydantic model)
+     - Retrieves relevant context from previous interactions;
+     - Stores user preferences and profile information;
+     - Maintains session history;
+   - **Output:** `MemoryUpdate` (Pydantic model).
 
 6. **Synthesizer** (`synthesizer`)
-   - **Role:** Response aggregator
+   - **Role:** Response aggregator;
    - **Responsibilities:**
-     - Combines outputs from multiple agents
-     - Formats final response for the user
-     - Stores interaction in memory
-   - **Output:** `FinalResponse` (Pydantic model)
+     - Combines outputs from multiple agents;
+     - Formats final response for the user;
+     - Stores interaction in memory;
+   - **Output:** `FinalResponse` (Pydantic model).
 
 ### Tools
 
-The system includes several tools that agents can use:
+The system includes 4 tools:
 
-1. **Calculator Tool** - Evaluates mathematical expressions
-2. **Code Executor Tool** - Executes simple Python code snippets safely
-3. **Schedule Tool** - Parses time durations and formats schedules
-4. **Knowledge Base Tool** - Simple in-memory knowledge base for common concepts (MAS, LangGraph, LangChain)
+1. **Calculator Tool** - evaluates mathematical expressions;
+2. **Code Executor Tool** - executes simple Python code snippets safely;
+3. **Schedule Tool** - parses time durations and formats schedules;
+4. **Knowledge Base Tool** - simple in-memory knowledge base for common concepts.
 
 ### Memory Management
 
 Memory is managed through a `MemoryStore` class that:
-- Stores session history (last 20 interactions)
-- Maintains user profile (topics asked, coding languages, study goals)
-- Provides context retrieval for relevant previous discussions
-- Persists to a JSON file (`memory_store.json`)
+- Stores session history (last 20 interactions);
+- Maintains user profile (topics asked, coding languages, study goals);
+- Provides context retrieval for relevant previous discussions;
+- Persists to a JSON file (`memory_store.json`).
 
 ### State Management
 
 The system uses a `MultiAgentState` TypedDict that contains:
-- User query
-- Routing decision
-- Agent outputs (theory explanation, code help, study plan, memory update)
-- Memory context
-- Final response
-- Control flow information (agents involved, tools used, errors)
+- User query;
+- Routing decision;
+- Agent outputs (theory explanation, code help, study plan, memory update);
+- Memory context;
+- Final response;
+- Control flow information (agents involved, tools used, errors).
 
 ## Flow Diagram
 
@@ -125,89 +127,89 @@ graph TD
 
 1. **Entry Point:** User query enters through the Router Agent
 2. **Router Decision:** Router analyzes query and decides:
-   - Query type (theory, code, planning, memory, general)
-   - Which specialist agent(s) to involve
-   - Whether memory retrieval is needed
-   - Whether tools might be needed
-3. **Memory Retrieval (if needed):** If `needs_memory=True`, Memory Manager retrieves relevant context from previous interactions
+   - Query type (theory, code, planning, memory, general);
+   - Which agent to involve;
+   - Whether memory retrieval is needed;
+   - Whether tools might be needed.
+3. **Memory Retrieval (if needed):** If `needs_memory=True`, Memory Manager retrieves relevant context from previous interactions.
 4. **Specialist Processing:** Appropriate specialist agent processes the query:
-   - Theory Explainer for conceptual questions
-   - Code Helper for implementation questions
-   - Planner for study planning questions
+   - Theory Explainer for conceptual questions;
+   - Code Helper for implementation questions;
+   - Planner for study planning questions.
 5. **Tool Calling:** Agents call tools as needed:
-   - Theory Explainer → Knowledge Base Tool (for common concepts)
-   - Code Helper → Code Executor Tool (for code execution)
-   - Planner → Schedule Tool (for time management)
-6. **Synthesis:** Synthesizer combines all agent outputs into a coherent final response
-7. **Memory Storage:** Interaction is stored in Memory Store for future reference
-8. **Response:** Final response returned to user
+   - Theory Explainer -> Knowledge Base Tool (for common concepts);
+   - Code Helper -> Code Executor Tool (for code execution);
+   - Planner -> Schedule Tool (for time management).
+6. **Synthesis:** Synthesizer combines all agent outputs into a coherent final response.
+7. **Memory Storage:** Interaction is stored in Memory Store for future reference.
+8. **Response:** Final response returned to user.
 
 ### Tool Calling Details
 
 **Where tools are called and for what purpose:**
 
 - **Knowledge Base Tool** (`src/tools.py:KnowledgeBaseTool`)
-  - Called by: Theory Explainer Agent
-  - Purpose: Provides quick access to definitions of common concepts (MAS, LangGraph, LangChain)
-  - When: During concept explanation to enhance responses with predefined knowledge
+  - Called by: Theory Explainer Agent;
+  - Purpose: Provides quick access to definitions of common concepts;
+  - When: During concept explanation to enhance responses with predefined knowledge.
 
 - **Code Executor Tool** (`src/tools.py:CodeExecutorTool`)
-  - Called by: Code Helper Agent
-  - Purpose: Executes simple Python code snippets safely with timeout and security restrictions
-  - When: User asks for code examples that can be tested/verified
+  - Called by: Code Helper Agent;
+  - Purpose: Executes simple Python code snippets safely with timeout and security restrictions;
+  - When: User asks for code examples that can be tested/verified.
 
 - **Schedule Tool** (`src/tools.py:ScheduleTool`)
-  - Called by: Planner Agent
-  - Purpose: Parses time duration strings and formats study schedules
-  - When: Creating study plans with time estimates
+  - Called by: Planner Agent;
+  - Purpose: Parses time duration strings and formats study schedules;
+  - When: Creating study plans with time estimates.
 
 - **Calculator Tool** (`src/tools.py:CalculatorTool`)
-  - Available to: All agents (if needed)
-  - Purpose: Evaluates mathematical expressions safely
-  - When: Queries involve calculations
+  - Available to: All agents (if needed);
+  - Purpose: Evaluates mathematical expressions safely;
+  - When: Queries involve calculations.
 
 ### Memory Management Details
 
 **What is stored:**
 
 1. **Session History:**
-   - Last 20 interactions stored in `memory_store.json`
-   - Each interaction contains: timestamp, user query, response (first 500 chars), agents involved
+   - Last 20 interactions stored in `memory_store.json`;
+   - Each interaction contains: timestamp, user query, response (first 500 chars), agents involved.
 
 2. **User Profile:**
-   - Topics asked about (for personalization)
-   - Coding languages mentioned
-   - Study goals set
+   - Topics asked about;
+   - Coding languages mentioned;
+   - Study goals set.
 
 3. **Context Dictionary:**
    - General context for extensibility
 
 **Where it is stored:**
 
-- File-based storage: `memory_store.json` (created in project root or specified path)
-- In-memory during execution: `MemoryStore` class maintains state
-- Persisted across sessions: JSON file persists between runs
+- File-based storage: `memory_store.json` (created in project root or specified path);
+- In-memory during execution: `MemoryStore` class maintains state;
+- Persisted across sessions: JSON file persists between runs.
 
 **How memory influences later steps:**
 
 1. **Router Stage:**
-   - Router can request memory retrieval if query suggests context is needed (e.g., "What did we discuss earlier?")
-   - Recent context helps router make better routing decisions
+   - Router can request memory retrieval if query suggests context is needed (e.g., "What did we discuss earlier?");
+   - Recent context helps router make better routing decisions.
 
 2. **Memory Manager Stage:**
-   - Retrieves recent interactions (last 3 by default)
-   - Searches history for keywords from current query
-   - Provides retrieved context to specialist agents
+   - Retrieves recent interactions (last 3 by default);
+   - Searches history for keywords from current query;
+   - Provides retrieved context to specialist agents.
 
 3. **Specialist Agent Stage:**
-   - Agents receive memory context as additional input
-   - Can reference previous discussions to provide more relevant responses
-   - Can build upon earlier explanations
+   - Agents receive memory context as additional input;
+   - Can reference previous discussions to provide more relevant responses;
+   - Can build upon earlier explanations.
 
 4. **Synthesizer Stage:**
-   - Stores new interaction in memory
-   - Updates user profile based on interaction content
-   - Memory persisted to file for future sessions
+   - Stores new interaction in memory;
+   - Updates user profile based on interaction content;
+   - Memory persisted to file for future sessions.
 
 ## Installation
 
@@ -274,46 +276,46 @@ The notebook also contains 5 complete experiments with detailed analysis.
 
 ### Model Configuration
 
-- **Model:** Qwen3-32B via vLLM (same as Lab 1)
-- **Endpoint:** OpenAI-compatible API
-- **Retry Logic:** Implemented for Pydantic parsing (max 3 retries)
-- **Temperature:** Varies by agent (router: 0.1, theory: 0.7, code: 0.3, planner: 0.5)
+- **Model:** Qwen3-32B via vLLM;
+- **Endpoint:** OpenAI-compatible API;
+- **Retry Logic:** Implemented for Pydantic parsing (max 3 retries);
+- **Temperature:** Varies by agent (router: 0.1, theory: 0.7, code: 0.3, planner: 0.5).
 
 ### Pydantic Models
 
 All agents use Pydantic models for structured outputs:
-- `RoutingDecision` - Router output
-- `TheoryExplanation` - Theory explainer output
-- `CodeHelp` - Code helper output
-- `StudyPlan` - Planner output
-- `MemoryUpdate` - Memory manager output
-- `FinalResponse` - Final system response
+- `RoutingDecision` - Router output;
+- `TheoryExplanation` - Theory explainer output;
+- `CodeHelp` - Code helper output;
+- `StudyPlan` - Planner output;
+- `MemoryUpdate` - Memory manager output;
+- `FinalResponse` - Final system response.
 
 Retry logic is implemented in the LLM initialization (`max_retries=3`) to handle parsing errors.
 
 ### Handoff Logic
 
 Handoff between agents is implemented through:
-1. **Conditional routing** in LangGraph based on routing decisions
-2. **State passing** through the shared `MultiAgentState`
-3. **Memory context** passed to specialist agents when needed
+1. **Conditional routing** in LangGraph based on routing decisions;
+2. **State passing** through the shared `MultiAgentState`;
+3. **Memory context** passed to specialist agents when needed.
 
 ### Tool Calling
 
 Tools are called by agents as needed:
-- Theory Explainer uses Knowledge Base Tool
-- Code Helper uses Code Executor Tool
-- Planner uses Schedule Tool
-- Calculator Tool available for mathematical queries
+- Theory Explainer uses Knowledge Base Tool;
+- Code Helper uses Code Executor Tool;
+- Planner uses Schedule Tool;
+- Calculator Tool available for mathematical queries.
 
 ## Experiments
 
 See `notebooks/experiments.ipynb` for:
-- 5+ test queries covering different scenarios
-- Analysis of agent routing and handoff
-- Tool usage tracking
-- Memory effectiveness evaluation
-- Performance observations
+- 5 test queries covering different scenarios;
+- Analysis of agent routing and handoff;
+- Tool usage tracking;
+- Memory effectiveness evaluation;
+- Performance observations.
 
 ## Design Scheme
 
@@ -321,25 +323,25 @@ See `notebooks/experiments.ipynb` for:
 
 The system implements a **Router + Specialists** pattern, which is a common MAS pattern where:
 
-- **Router Agent** acts as the entry point and dispatcher, analyzing queries and deciding routing
-- **Specialist Agents** handle specific types of tasks (theory explanation, coding help, planning)
-- **Memory Manager** maintains context across interactions
-- **Synthesizer** combines outputs from multiple agents into a coherent response
+- **Router Agent** acts as the entry point and dispatcher, analyzing queries and deciding routing;
+- **Specialist Agents** handle specific types of tasks (theory explanation, coding help, planning);
+- **Memory Manager** maintains context across interactions;
+- **Synthesizer** combines outputs from multiple agents into a coherent response.
 
 This pattern is chosen because:
-- It allows for clear separation of concerns
-- Each agent can be specialized and optimized for its task
-- The router provides intelligent routing based on query analysis
-- Memory enables context-aware responses
+- It allows for clear separation of concerns;
+- Each agent can be specialized and optimized for its task;
+- The router provides intelligent routing based on query analysis;
+- Memory enables context-aware responses.
 
 ### How the Pattern is Reflected in the Design
 
-1. **Entry Point:** All queries enter through the Router Agent
-2. **Routing Decision:** Router analyzes query and decides which specialist(s) to involve
-3. **Memory Check:** If memory is needed, Memory Manager retrieves context first
-4. **Specialist Processing:** Appropriate specialist agent(s) process the query
-5. **Synthesis:** Synthesizer combines all outputs into final response
-6. **Memory Update:** Interaction is stored in memory for future reference
+1. **Entry Point:** All queries enter through the Router Agent;
+2. **Routing Decision:** Router analyzes query and decides which specialists to involve;
+3. **Memory Check:** If memory is needed, Memory Manager retrieves context first;
+4. **Specialist Processing:** Appropriate specialist agents process the query;
+5. **Synthesis:** Synthesizer combines all outputs into final response;
+6. **Memory Update:** Interaction is stored in memory for future reference.
 
 ## Reflection
 
@@ -348,15 +350,15 @@ This pattern is chosen because:
 1. **Router Pattern:** The router agent successfully classified 4 out of 5 queries correctly, with clear reasoning for each decision. The Pydantic `RoutingDecision` model provided structured, interpretable routing logic.
 
 2. **Structured Outputs:** Pydantic models ensured consistent, parseable outputs from all agents:
-   - `TheoryExplanation` provided structured explanations with key points and examples
-   - `CodeHelp` delivered actionable code with best practices
-   - `StudyPlan` created detailed, time-bound plans with resources
-   - `MemoryUpdate` successfully retrieved and formatted context
+   - `TheoryExplanation` provided structured explanations with key points and examples;
+   - `CodeHelp` delivered actionable code with best practices;
+   - `StudyPlan` created detailed, time-bound plans with resources;
+   - `MemoryUpdate` successfully retrieved and formatted context.
 
 3. **Tool Integration:** Tools were called appropriately:
-   - Code executor activated for coding questions
-   - Schedule tool used for planning tasks
-   - No unnecessary tool calls for theoretical questions
+   - Code executor activated for coding questions;
+   - Schedule tool used for planning tasks;
+   - No unnecessary tool calls for theoretical questions.
 
 4. **Memory Management:** The memory system successfully stored and retrieved session history. Memory retrieval correctly activated when explicitly requested and provided relevant context.
 
@@ -389,14 +391,11 @@ This pattern is chosen because:
 6. **Reviewer Agent:** Add an agent that reviews and improves responses before final output, ensuring consistency and quality across all interactions.
 
 7. **Better Tools:** Integrate more sophisticated tools:
-   - Web search for up-to-date information
-   - Code analysis tools beyond simple execution
-   - Documentation lookup for LangGraph/LangChain APIs
+   - Web search for up-to-date information;
+   - Code analysis tools beyond simple execution;
+   - Documentation lookup for LangGraph/LangChain APIs.
 
 8. **Planner-Executor Pattern:** Implement a more sophisticated planner-executor pattern for complex multi-step tasks that require decomposition and sequential execution.
 
-## License
-
-This project is part of an academic assignment.
 
 
